@@ -1,0 +1,70 @@
+/* Root Variables */
+:root {
+    --color-primary: #3498db;
+    --color-secondary: #2ecc71;
+    --font-size-base: 16px;
+    --font-family: 'Helvetica Neue', sans-serif;
+}
+
+/* Layout Styles */
+body {
+    margin: 0;
+    padding: 0;
+    font-size: var(--font-size-base);
+    font-family: var(--font-family);
+}
+
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+}
+
+/* Button Styles */
+.btn {
+    background-color: var(--color-primary);
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: var(--font-size-base);
+    margin: 4px 2px;
+    cursor: pointer;
+}
+
+.btn-secondary {
+    background-color: var(--color-secondary);
+}
+
+/* UI Element Styles */
+.input {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
