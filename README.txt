@@ -53,3 +53,9 @@ En nedladdad fil fungerar därför bara när datorn är uppkopplad. Säg till om
 bäddas in i filen så att den fungerar helt utan internet.
 
 Sidan använder inga cookies och inga externa typsnitt eller spårning.
+
+Banner
+------
+assets/img/banner.png (1600 x 500) och banner@2x.png (3200 x 1000, skarpare på stora/högupplösta skärmar).
+Kan användas som sidhuvudsbild i Google Sites, i inlägg eller som bild i mejl. Vill du använda den på startsidan:
+lägg <img src="assets/img/banner.png" alt="Banritningsverktyget – rita banor och program på några minuter"> överst i index.html.

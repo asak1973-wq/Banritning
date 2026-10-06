@@ -731,7 +731,7 @@
       <ul class="help-list">
         <li><b>Banan:</b> Justera zoom med reglaget eller <b>(+/-)</b>. Ändra banans storlek och aktivera rutnät (1x1m rutor) eller dressyrbokstäver vid behov.</li>
         <li><b>Tävlingsinfo:</b> Fyll i Titel, Klass etc. Denna info hamnar i sidhuvudet på din PDF.</li>
-        <li><b>Hinderlista (Hinderdetaljer):</b> Markera ett hinder för att skriva in nummer och beskrivning i sidopanelen. Klicka på "Infoga hinderlista i texten" för att bygga en lista över alla hinder som har nummer. Fyll gärna i alla nummer och beskrivningar först. Listan skapas från det som är ifyllt just då och uppdateras inte automatiskt.</li>
+        <li><b>Hinderlista (Hinderdetaljer):</b> Markera ett hinder för att skriva in nummer och beskrivning i sidopanelen. Klicka på "Infoga hinderlista i texten" (knappen finns både under Hinderdetaljer och under Tävlingsinformation) för att bygga en lista över alla hinder som har nummer. Fyll gärna i alla nummer och beskrivningar först. Listan skapas från det som är ifyllt just då och uppdateras inte automatiskt.</li>
         <li><b>Flera hinderlistor:</b> Finns det redan en lista i infotexten får du välja att <b>ersätta</b> den (eller en av dem om det finns flera) eller <b>lägga till en ny lista</b>, till exempel en för teknik och en för speed.</li>
       </ul>
     </details>
@@ -794,7 +794,7 @@
     </details>
 
     <details>
-      <summary>🎨 Utseende &amp; Lager</summary>
+      <summary>🎨 Färg &amp; Lager</summary>
       <ul class="help-list">
         <li><b>Färg:</b> Markera objekt (bommar, linjer, markeringar) och välj färg i paletten för att ändra utseende.</li>
         <li><b>Lagerhantering (Dölj/Visa):</b> Öppna fliken i menyn för en lista över alla objekt. Klicka på <b>ögon-ikonen (👁️)</b> för att tillfälligt dölja (🙈) ett objekt från ritytan, t.ex. för att se linjer som ligger under!</li>
@@ -1269,6 +1269,10 @@
                 <div id="course-msg" class="rich-editor" contenteditable="true" placeholder="Skriv instruktioner här..."></div>
             </div>
         </div>
+        <div class="input-group" style="margin-top: 4px;">
+            <button class="tool-btn primary full" style="background: #2563eb; color: white;" onclick="syncObstacleList()" title="Bygger en hinderförteckning av nummer och beskrivningar och lägger den i informationsrutan ovan.">Infoga hinderlista i texten</button>
+            <small class="field-note">Infogar en hinderförteckning i informationsrutan ovan, byggd av de nummer och beskrivningar du skrivit under <i>Hinderdetaljer</i>. Fyll gärna i alla hinder först – listan uppdateras inte automatiskt.</small>
+        </div>
         </div>
 
 <div id="textModal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); align-items:center; justify-content:center;">
@@ -1476,7 +1480,7 @@
     </div> 
     </div> 
       
-<div class="section-title collapsed" onclick="toggleSection(this)" title="Rita ridvägar, cirklar, mät avstånd och sätt ut måttlinjer">📏 Linjer och mått</div><div class="section-content hidden">
+<div class="section-title collapsed" onclick="toggleSection(this)" title="Rita ridvägar, cirklar, mät avstånd och sätt ut måttlinjer">📏 Linjer &amp; mått</div><div class="section-content hidden">
     <div class="tool-grid icons"> 
           <button class="tool-btn" onclick="setLineTool()" id="btn-line"><svg class="ti" viewBox="0 0 32 32" aria-hidden="true"><line x1="5" y1="26" x2="27" y2="6"/><circle class="f" cx="5" cy="26" r="1.9"/><circle class="f" cx="27" cy="6" r="1.9"/></svg><span>Raklinje</span></button>
           <button class="tool-btn" onclick="addCircle()"><svg class="ti" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="11"/></svg><span>Cirkel</span></button>
@@ -1494,7 +1498,7 @@
 </div>
       </div>
 
-<div class="section-title collapsed" onclick="toggleSection(this)" title="Byt färg på det objekt du har markerat på banan">🎨 Färg & Utseende</div>
+<div class="section-title collapsed" onclick="toggleSection(this)" title="Byt färg på det objekt du har markerat på banan">🎨 Färg</div>
 <div class="section-content hidden">
     <div class="input-group">
         <label style="font-size: 10px; margin-bottom: 5px; display: block;">Färg på markerat objekt</label>
