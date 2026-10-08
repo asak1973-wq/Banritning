@@ -1,0 +1,10 @@
+Banritningsverktyget - uppladdning
+
+Mappen "verktyg" innehaller hela verktyget som en enda fil (index.html).
+Verktyget oppnas pa adressen: din-sida/verktyg/
+
+GitHub (webben):
+1. Packa upp zip-filen pa datorn.
+2. Ga till ditt repo > Add file > Upload files.
+3. Dra in MAPPEN "verktyg" (inte bara filen) sa att den ersatter den gamla.
+4. Commit changes. Vanta 1-2 minuter och ladda om med Ctrl+Shift+R.
