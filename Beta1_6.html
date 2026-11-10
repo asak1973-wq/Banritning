@@ -2101,7 +2101,9 @@ function sidebarSearch(query) {
   // drawGrid() när ett tillstånd läses in, så det behöver varken sparas i Ångra-stegen
   // eller i autosparningen (hundratals linjer och en bakgrundstextur per steg).
   function canvasContentJSON() {
-      const json = canvas.toJSON(['data']);
+      // Lås följer med, så att låsta objekt förblir låsta och hinder behåller sin form
+      // efter Ångra och när banan sparas och öppnas igen.
+      const json = canvas.toJSON(['data', 'lockMovementX', 'lockMovementY', 'lockRotation', 'lockScalingX', 'lockScalingY', 'lockScalingFlip', 'lockUniScaling']);
       json.objects = (json.objects || []).filter(o => !(o.data && o.data.type === 'grid'));
       return json;
   }
@@ -2169,10 +2171,21 @@ function sidebarSearch(query) {
       });
   }
 
+  // Hinder som alltid ska behålla sin storlek. Låsen sätts även när en bana öppnas eller ett steg
+  // ångras, så att hinder i äldre filer (där låsen inte sparades) inte går att dra ut.
+  const SIZE_LOCKED_TYPES = ['vertical', 'oxer', 'triple-bar', 'wall', 'Kon', 'bridge', 'table-obstacle', 'En tunna', 'Två tunnor', 'Tre tunnor', 'lance-barrel', 'move-cup', 'standalone-barrel', 'ring-obstacle', 'Rygga mönster', 'Hindernummer', 'course-marker'];
+  function lockObstacleSizes() {
+      canvas.getObjects().forEach(obj => {
+          const t = obj.data && obj.data.type;
+          if (t && SIZE_LOCKED_TYPES.indexOf(t) !== -1) obj.set({ lockScalingX: true, lockScalingY: true, lockScalingFlip: true });
+      });
+  }
+
   function saveState() {
       if (isStateChanging) return;
       if (typeof syncAllBadges === 'function') syncAllBadges();
       const snapStr = currentSnapshotString();
+      let historyPushed = false;
       // Lägg aldrig in två identiska steg efter varandra (t.ex. när både object:added och
       // en funktion själv anropar saveState för samma åtgärd)
       if (undoStack.length === 0 || undoStack[undoStack.length - 1] !== snapStr) {
@@ -2186,13 +2199,14 @@ function sidebarSearch(query) {
               if (undoStack.length > 50) undoStack.shift();
           }
           lastHistoryPush = nowTs;
+          historyPushed = true;
           // En ny ändring gör de "framåt"-steg som fanns ogiltiga (samma princip som i t.ex. Word)
           redoStack = [];
       }
 if (typeof updateLayerList === 'function') updateLayerList();
 if (typeof updateCourseStats === 'function') updateCourseStats();
 updateUndoRedoButtons();
-lastHistoryPush = Date.now(); // mät från slutet av sparningen, så att tunga uppdateringar inte bryter sammanslagningen
+if (historyPushed) lastHistoryPush = Date.now(); // mät från slutet av sparningen, så att tunga uppdateringar inte bryter sammanslagningen
 scheduleAutosave(); // Autospara (om aktiverat) - se AUTOSPARA-blocket nedan
   }
 
@@ -2394,7 +2408,7 @@ scheduleAutosave(); // Autospara (om aktiverat) - se AUTOSPARA-blocket nedan
       canvas.clear();   // VIKTIGT: annars läggs det inlästa ovanpå det som redan finns (dubbletter)
       canvas.loadFromJSON(canvasData, () => {
           removeEmptyLines();               // äldre banor kan innehålla osynliga linjer utan längd
-          lockSystemObjects();              // lås småbanor, bokstäver och sidbrytningsmarkeringar
+          lockSystemObjects(); lockObstacleSizes();              // lås småbanor, bokstäver och sidbrytningsmarkeringar
           drawGrid();
           syncProgramArenaSizeFromCanvas(); // "Program-arena storlek" och utskriftsformat efter det som lästes in
           if (isProgram) fitCanvasToProgramContent();   // ritytan efter faktiskt innehåll
@@ -2421,7 +2435,7 @@ scheduleAutosave(); // Autospara (om aktiverat) - se AUTOSPARA-blocket nedan
                 if (wr) { wr.style.width = snapData.meta.w + 'px'; wr.style.height = snapData.meta.h + 'px'; }
             }
         }
-        lockSystemObjects(); // lås småbanor, bokstäver och sidbrytningsmarkeringar
+        lockSystemObjects(); lockObstacleSizes(); // lås småbanor, bokstäver och sidbrytningsmarkeringar
 
         drawGrid(); // Denna kommer nu kontrollera om rutnät ska ritas
         canvas.renderAll();
@@ -3691,7 +3705,7 @@ function addVertical(weName) {
 drop(new fabric.Group([s1, s2, pole], { 
         originX: 'center', 
         originY: 'center',
-        lockScalingY: true,
+        lockScalingX: true, lockScalingY: true,
         lockScalingFlip: true,
         shadow: {
             color: 'rgba(0,0,0,0.2)',
@@ -3717,7 +3731,7 @@ drop(new fabric.Group([s1, s2, pole], {
     [-25, 0, 25].forEach(y => stands.push(createStand(-70, y, 18), createStand(70, y, 18)));
     drop(new fabric.Group([...stands, p1, p2, p3], {
         originX: 'center', originY: 'center',
-        lockScalingY: true, lockScalingFlip: true,
+        lockScalingX: true, lockScalingY: true, lockScalingFlip: true,
         shadow: { color: 'rgba(0,0,0,0.2)', blur: 10, offsetX: 5, offsetY: 5 },
         data: { type: 'triple-bar', description: 'Trippelbarr', autoName: true }
     }));
@@ -3738,7 +3752,7 @@ drop(new fabric.Group([s1, s2, pole], {
     parts.push(new fabric.Rect({ width: W - 6, height: 3, fill: '#ffffff', opacity: 0.22, left: 0, top: -H / 2 + 4, originX: 'center', originY: 'center', selectable: false, evented: false }));
     drop(new fabric.Group(parts, {
         originX: 'center', originY: 'center',
-        lockScalingY: true, lockScalingFlip: true,
+        lockScalingX: true, lockScalingY: true, lockScalingFlip: true,
         shadow: { color: 'rgba(0,0,0,0.2)', blur: 10, offsetX: 5, offsetY: 5 },
         data: { type: 'wall', description: 'Mur', autoName: true }
     }));
@@ -3760,7 +3774,7 @@ drop(new fabric.Group([s1, s2, pole], {
   drop(new fabric.Group([...stands, poleF, poleB], { 
         originX: 'center', 
         originY: 'center',
-        lockScalingY: true,      
+        lockScalingX: true, lockScalingY: true,      
         lockScalingFlip: true,
         shadow: {
             color: 'rgba(0,0,0,0.2)',
@@ -7734,11 +7748,17 @@ function fitCanvasToProgramContent() {
     const miniArenas = objects.filter(obj => obj.data && obj.data.role === 'mini-arena');
     if (miniArenas.length === 0) return;
 
-    const maxRight = Math.max(...miniArenas.map(o => o.left + o.width));
-    const maxBottom = Math.max(...objects.map(o => (o.top || 0) + (o.height || 0)));
+    // Ritytan blir precis så bred som småbanorna behöver (samma marginal till höger som till
+    // vänster). Annars blir en bred ryttarbana som var öppen innan kvar som en tom yta bredvid
+    // småbanorna, och de skrivs ut onödigt små.
+    const content = objects.filter(o => !(o.data && (o.data.type === 'grid' || o.data.type === 'page-break-guide')));
+    const minLeft = Math.min(...miniArenas.map(o => o.left));
+    const arenaRight = Math.max(...miniArenas.map(o => o.left + o.width));
+    const maxRight = Math.max(arenaRight + Math.max(40, minLeft), ...content.map(o => o.getBoundingRect(true, true).left + o.getBoundingRect(true, true).width + 10));
+    const maxBottom = Math.max(...content.map(o => (o.top || 0) + (o.height || 0)));
 
-    const width = Math.max(canvas.width, maxRight + 60);
-    const height = Math.max(canvas.height, maxBottom + 150); // marginal för momenttext under sista raden
+    const width = Math.round(maxRight);
+    const height = Math.round(maxBottom + 150); // marginal för momenttext under sista raden
 
     canvas.setDimensions({ width, height });
 
@@ -7789,6 +7809,16 @@ function syncProgramArenaSizeFromCanvas() {
     sizeSelect.value = best;
 }
 
+// Småbanornas kolumn- och radlägen. Lägen som skiljer sig med någon enstaka pixel (t.ex. en
+// småbana som råkat knuffas en aning i en äldre fil) räknas som samma kolumn/rad, så att
+// sidindelningen inte blir fel.
+function distinctPositions(values, tol) {
+    const t = (typeof tol === 'number') ? tol : 5;
+    const out = [];
+    values.slice().sort((a, b) => a - b).forEach(v => { if (!out.length || v - out[out.length - 1] > t) out.push(v); });
+    return out;
+}
+
 function getProgramLayoutConfig(ratio) {
     if (ratio > 0.4) {
         // Kort bana (20x40) - plats för 3 rader på sida 1 (mindre banor => mer ryms trots rubriken)
@@ -7817,8 +7847,8 @@ function refreshPageBreakGuides() {
     // Härled kolumner, radhöjd och radavstånd från de FAKTISKA banorna på canvasen,
     // istället för att anta att de skapades med nuvarande layout-inställningar.
     // Annars hamnar sidbrytningslinjen fel för äldre filer/mallar.
-    const lefts = [...new Set(miniArenas.map(a => a.left))].sort((a, b) => a - b);
-    const tops = [...new Set(miniArenas.map(a => a.top))].sort((a, b) => a - b);
+    const lefts = distinctPositions(miniArenas.map(a => a.left));
+    const tops = distinctPositions(miniArenas.map(a => a.top));
     const cols = lefts.length || 1;
     const miniH = miniArenas[0].height;
     const baseTop = tops[0];
@@ -7996,8 +8026,8 @@ async function addMoreMoments() {
     let cols, miniW, miniH, colStep, rowStep, baseLeft, baseTop;
 
     if (existingArenas.length > 0) {
-        const lefts = [...new Set(existingArenas.map(a => a.left))].sort((a, b) => a - b);
-        const tops = [...new Set(existingArenas.map(a => a.top))].sort((a, b) => a - b);
+        const lefts = distinctPositions(existingArenas.map(a => a.left));
+        const tops = distinctPositions(existingArenas.map(a => a.top));
 
         cols = lefts.length;
         miniW = existingArenas[0].width;
@@ -9064,7 +9094,8 @@ async function renderPdfLogic(doc) {
             const customW = document.getElementById('custom-width')?.value || document.getElementById('canvas-width')?.value;
             const customH = document.getElementById('custom-height')?.value || document.getElementById('canvas-height')?.value;
 
-            if (arenaSelect && arenaSelect.value !== 'custom') sizeText = arenaSelect.value.replace('x', ' x ') + " m";
+            if (allMiniArenas.length > 0) sizeText = (allMiniArenas[0].width / allMiniArenas[0].height > 0.4) ? "20 x 40 m" : "20 x 60 m";   // program: småbanornas storlek
+            else if (arenaSelect && arenaSelect.value !== 'custom') sizeText = arenaSelect.value.replace('x', ' x ') + " m";
             else if (customW && customH) sizeText = `${customW} x ${customH} m`;
             else sizeText = "Mått ej angivet";
 
@@ -9213,9 +9244,9 @@ async function renderPdfLogic(doc) {
     }
 
     // SCENARIO B: Matematisk och obegränsad flersidig programvy
-    allMiniArenas.sort((a, b) => a.top - b.top || a.left - b.left);
+    allMiniArenas.sort((a, b) => (Math.abs(a.top - b.top) > 5 ? a.top - b.top : a.left - b.left));
 
-    const uniqueLefts = [...new Set(allMiniArenas.map(b => b.left))].length;
+    const uniqueLefts = distinctPositions(allMiniArenas.map(b => b.left)).length;
     const cols = uniqueLefts > 0 ? uniqueLefts : 4;
 
     // Kort bana (20x40) har högre bredd/höjd-förhållande än lång bana (20x60),
@@ -9225,7 +9256,7 @@ async function renderPdfLogic(doc) {
     const banasPerPage = cols * rowsPerPage;
 
     // Antal unika rader (bantoppar) som faktiskt finns på canvasen just nu.
-    const uniqueTops = [...new Set(allMiniArenas.map(b => b.top))].sort((a, b) => a - b);
+    const uniqueTops = distinctPositions(allMiniArenas.map(b => b.top));
 
     // Sida 1: kort bana (20x40) får plats med 3 rader, lång bana (20x60) med 2,
     // se motsvarande logik i getProgramLayoutConfig(). Skalningen styrs i första
@@ -9259,7 +9290,19 @@ async function renderPdfLogic(doc) {
         const pageBanas = allMiniArenas.slice(startIndex, endIndex);
         if (pageBanas.length === 0) return null;
         const minTop = Math.max(0, Math.min(...pageBanas.map(b => b.top)) - 30);
-        const maxBottom = Math.min(canvas.height, Math.max(...pageBanas.map(b => b.top + b.height)) + 60);
+        // Nederkant: minst 60 px under småbanorna, och längre ned om momenttexten under sista
+        // raden behöver det (annars klipps tredje textraden bort). Aldrig in på nästa rad.
+        const arenaBottom = Math.max(...pageBanas.map(b => b.top + b.height));
+        const nextBana = allMiniArenas[endIndex];
+        const limit = nextBana ? (nextBana.top - 35) : canvas.height;
+        let contentBottom = arenaBottom + 60;
+        canvas.getObjects().forEach(o => {
+            const d = o.data || {};
+            if (o === bgRect || o.visible === false || d.type === 'grid' || d.type === 'page-break-guide' || d.role === 'mini-arena') return;
+            const r = o.getBoundingRect(true, true);
+            if (r.top >= arenaBottom - 5 && r.top < limit) contentBottom = Math.max(contentBottom, r.top + r.height + 8);
+        });
+        const maxBottom = Math.min(canvas.height, limit, contentBottom);
         const clipHeight = maxBottom - minTop;
         const availableHeight = (p === 0) ? (pageHeight - contentTop - margin) : (pageHeight - margin - margin);
         return { minTop, clipHeight, availableHeight };
