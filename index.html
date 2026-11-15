@@ -3321,6 +3321,44 @@ function handleOrientationChange() {
     handleSizeChange();   // nya mått, nytt rutnät och bokstäver, en ny punkt i Ångra
 }
 
+// ---------- Ritytans upplösning på iPhone och iPad ----------
+// Safari på iPhone/iPad ritar inte en canvas som är större än ca 16,7 miljoner bildpunkter, och
+// har dessutom ett tak för hur mycket minne alla canvasar får använda. Fabric gör ritytan
+// skärmskala x skärmskala gånger större för skarp bild, så en 20 x 60-bana på en iPhone med
+// skärmskala 3 blev 19,6 miljoner bildpunkter: banan blev tom, utan rutnät, och inga hinder
+// kunde läggas ut. Här begränsas skalan så att ritytan alltid håller sig under en budget.
+const NATIVE_PIXEL_RATIO = window.devicePixelRatio || 1;
+const IS_IOS_DEVICE = /iP(hone|od|ad)/.test(navigator.userAgent || '') ||
+    (navigator.platform === 'MacIntel' && (navigator.maxTouchPoints || 0) > 1);
+const CANVAS_PIXEL_BUDGET = IS_IOS_DEVICE ? 6000000 : 60000000;
+function updateCanvasPixelRatio(w, h) {
+    const area = Math.max(1, (w || 1) * (h || 1));
+    const ratio = Math.min(NATIVE_PIXEL_RATIO, Math.sqrt(CANVAS_PIXEL_BUDGET / area));
+    fabric.devicePixelRatio = Math.max(1, Math.floor(ratio * 100) / 100);
+}
+// Varje storleksbyte (ny banstorlek, riktning, programvy, öppnad fil) räknar om skalan först.
+(function () {
+    const proto = fabric.StaticCanvas.prototype, orig = proto.setDimensions;
+    proto.setDimensions = function (dimensions, options) {
+        if (dimensions && !(options && options.cssOnly)) {
+            const w = (typeof dimensions.width === 'number') ? dimensions.width : this.width;
+            const h = (typeof dimensions.height === 'number') ? dimensions.height : this.height;
+            updateCanvasPixelRatio(w, h);
+        }
+        const out = orig.call(this, dimensions, options);
+        // Vid skala 1 gör Fabric ingen omskalning och lämnar annars kvar den gamla, större ritytan
+        if (!(fabric.devicePixelRatio > 1) && !(options && options.cssOnly)) {
+            [this.lowerCanvasEl, this.upperCanvasEl, this.cacheCanvasEl].forEach(el => {
+                if (el && (el.width !== Math.round(this.width) || el.height !== Math.round(this.height))) {
+                    el.width = this.width; el.height = this.height;
+                }
+            });
+            this.requestRenderAll();
+        }
+        return out;
+    };
+})();
+
 function handleSizeChange() {
     const select = document.getElementById('arena-size');
     let width, height;
@@ -3339,6 +3377,7 @@ function handleSizeChange() {
     const canvasH = dims.h;
 
     if (!canvas) {
+        updateCanvasPixelRatio(canvasW, canvasH);
         canvas = new fabric.Canvas('c', { 
             width: canvasW, 
             height: canvasH, 
@@ -8808,7 +8847,7 @@ async function loadTemplateFromLibrary(fileUrl, templateName) {
 // ================= PDF-ALTERNATIV: LOGGA, SIDFOT, DATUM, RYTTARE =================
 // Hemsidans adress som visas och länkas i sidfoten.
 // Programmets version. Visas bredvid rubriken och i utskriftens sidfot. Ändra här vid ny version.
-const APP_VERSION = '1.6';
+const APP_VERSION = '1.6.1';
 const PDF_FOOTER_URL = 'smedstorpsrs.com';
 const PDF_FOOTER_LINK = 'https://smedstorpsrs.com';
 let pdfLogo = null; // { data: 'data:image/png;base64,...', w: px, h: px }
